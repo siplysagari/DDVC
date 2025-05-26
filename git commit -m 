@@ -1,0 +1,14 @@
+filter.lfs.process=git-lfs filter-process
+filter.lfs.required=true
+filter.lfs.clean=git-lfs clean -- %f
+filter.lfs.smudge=git-lfs smudge -- %f
+safe.directory=/disk0_4t/ljy/project/dvc
+safe.directory=/disk0_4t/ljy/project/dvc
+core.repositoryformatversion=0
+core.filemode=true
+core.bare=false
+core.logallrefupdates=true
+remote.siplysagari.url=git@github.com:siplysagari/Ddvc.git
+remote.siplysagari.fetch=+refs/heads/*:refs/remotes/siplysagari/*
+user.name=siplysagari
+user.email=sipzhang22@gmail.com
