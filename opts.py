@@ -18,18 +18,16 @@ def parse_opts():
     parser.add_argument('--exp_name', type=str,help='save_path, cfgname + exp_name')
     parser.add_argument('--ret_ablation', type=str,default="None",help='ablation:Measure retrieval performance for upper bound / cheating_ablation : Measure cheated retrieval performance for upper bound ')
     parser.add_argument("--ideal_test",action="store_true", default=False,help="if true,ideal_test")
-    parser.add_argument('--eval_mode', type=str, default=False, choices=['eval', 'test'])
-    
+    parser.add_argument('--eval_mode', type=str, default=False, choices=['eval', 'test'])   
     parser.add_argument('--caption_decoder_new', type=str, default="none",help="none,gpt2")
-    
+ 
     parser.add_argument('--decoder_query_ablation', type=bool, default=True,help='True-on / False-off')
     parser.add_argument("--decoder_query_num", type=int,default=100)
     
     
     ################################
     # configure of this run
-    parser.add_argument('--cfg_path', type=str, help='config file',default='cfgs/yc2_clip_ddvc.yml')
-    
+    parser.add_argument('--cfg_path', type=str, help='config file',default='cfgs/yc2_clip_ddvc.yml')    
     parser.add_argument("--soft_k", type=int,default=20)
     parser.add_argument("--target_domain", type=str, default='yc2', help="which domain will be used  // 'anet','yc2','image' ")
     parser.add_argument("--bank_type", nargs='+', default=['yc2'], help="which domain will be used in ret bank // ['anet','yc2','image']")
@@ -49,7 +47,6 @@ def parse_opts():
     #######################################
     #for new struc    
     parser.add_argument('--ret_vector', type=str, default='nvec',help='nvec,memvec')
-    # parser.add_argument('--ret_encdec', type=str, default=False,help='nvec,memvec')
     parser.add_argument('--ret_encdec_ref_num', type=int, default=5,help='default 10 / num of reference when using memory vector retrieval')
     parser.add_argument('--down_proj', type=str, default='deep',help='simple,deep')
     parser.add_argument('--ret_text', type=str, default='token',help='token,sentence// token level or sentence level retireval')  
@@ -100,7 +97,6 @@ def parse_opts():
                         default=24,
                         help='number of sampled proposals (or proposal sequence), a bigger value may be better')
     parser.add_argument('--gt_proposal_sample_num', type=int, default=10)
-    # parser.add_argument('--train_proposal_type', type=str, default='', choices=['gt', 'learnt_seq', 'learnt'])
     
     
     ############################ Retrieval ########################################
@@ -109,7 +105,6 @@ def parse_opts():
     parser.add_argument("--sentence_encoder",type=str, default='Trainable',help="if Trainable,custom. else, pretrained")
     parser.add_argument("--disable_ret_prefix",action="store_true", default=False,help="if true, no text prefix retrieval and no prefix")
     parser.add_argument("--bank_path",type = str, default = 'bank')
-    # parser.add_argument("--k", type=int, default=1, help="Number of retrieved captions to use in prefix")
     parser.add_argument("--parag_template_path", type=str, default="src/template.txt", help="TXT file with template")
     parser.add_argument("--dvc_template_path", type=str, default="src/dvc_template.txt", help="TXT file with template")
     parser.add_argument("--generator", type=str, default="base", help="base, gpt2, opt // Decoder name as found of HuggingFace or stored locally")
@@ -249,17 +244,6 @@ def parse_opts():
 
     
     
-    #################### Contrastive learning ######################
-    #################### Contrastive learning ######################
-    #################### Contrastive learning ######################
-    #################### Contrastive learning ######################
-    #################### Contrastive learning ######################
-    #################### Contrastive learning ######################
-    #################### Contrastive learning ######################
-    #################### Contrastive learning ######################
-    #################### Contrastive learning ######################
-    #################### Contrastive learning ######################
-    #################### Contrastive learning ######################
     #################### Contrastive learning ######################
     parser.add_argument('--box_head_init_bias', type=float, default=-2.0)
     parser.add_argument('--task_heads_lr', type=float, default=5e-5)

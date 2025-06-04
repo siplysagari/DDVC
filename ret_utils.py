@@ -9,7 +9,6 @@ def load_clip_memory_bank(args):
             rag = os.path.join(args.bank_path,bank_type) #which domain will be used
             rag = os.path.join(rag,args.bank_folder)
             
-            # rag = os.path.join(rag,'clip')
             text_sentence = np.load(os.path.join(rag,bank_type+"_scene_sentences.npy"))
             text_embed = np.load(os.path.join(rag,bank_type+"_clip_token_embeds.npy"))
             scene_videoID = np.load(os.path.join(rag,bank_type+"_scene_videoID.npy"))
@@ -46,7 +45,6 @@ def load_clip_gt(args):
             rag = os.path.join(args.bank_path,bank_type) #which domain will be used
             rag = os.path.join(rag,"clip")
             
-            # rag = os.path.join(rag,'clip')
             text_sentence = np.load(os.path.join(rag,bank_type+"_scene_sentences.npy"))
             text_embed = np.load(os.path.join(rag,bank_type+"_clip_token_embeds.npy"))
             scene_videoID = np.load(os.path.join(rag,bank_type+"_scene_videoID.npy"))

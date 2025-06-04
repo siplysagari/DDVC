@@ -29,7 +29,6 @@ class BaseEncoder(nn.Module):
         if num_feature_levels > 1:
             input_proj_list = []
             in_channels = vf_dim
-            # 第一层维持原状态，后面的使用卷积
             input_proj_list.append(nn.Sequential(
                 nn.Conv1d(in_channels, hidden_dim, kernel_size=1),
                 nn.GroupNorm(32, hidden_dim),

@@ -98,7 +98,6 @@ class RetPositionEmbeddingSine(nn.Module):
     def forward(self, tensor_list: NestedTensor):
         x = tensor_list.tensors
         mask = tensor_list.mask
-        # duration = tensor_list.duration
         assert mask is not None
         not_mask = ~mask
         x_embed = not_mask.cumsum(1, dtype=torch.float32)
@@ -111,8 +110,6 @@ class RetPositionEmbeddingSine(nn.Module):
         pos_x = x_embed[:, :, None] / dim_t
         pos_x = torch.stack((pos_x[:, :, 0::2].sin(), pos_x[:, :, 1::2].cos()), dim=3).flatten(2)
         pos=pos_x.permute(0, 2, 1)
-        # dur_embed = self.duration_embedding(duration).reshape(-1,1,self.max_duration).expand_as(pos_x)
-        # pos = torch.cat((pos_x, dur_embed), dim=2).permute(0, 2, 1)
         return pos
 
     

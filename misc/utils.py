@@ -112,17 +112,8 @@ def build_floder(opt):
             os.mkdir(opt.save_dir)
         save_folder = os.path.join(opt.save_dir, opt.id)
         if os.path.exists(save_folder):
-            # wait_flag = input('Warning! ID {} already exists, rename it? (Y/N) : '.format(opt.id))
             raise AssertionError('ID already exists, folder {} exists'.format(save_folder))
-            
-            
-            # wait_flag = 'Y'
-            # if wait_flag in ['Y', 'y']:
-            #     opt.id = opt.id + '_v_{}'.format(time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()))
-            #     save_folder = os.path.join(opt.save_dir, opt.id)
-            #     print('Rename opt.id as "{}".'.format(opt.id))
-            # else:
-            #     raise AssertionError('ID already exists, folder {} exists'.format(save_folder))
+
         
         
         

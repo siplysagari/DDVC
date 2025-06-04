@@ -42,7 +42,6 @@ class HungarianMatcher(nn.Module):
         self.cost_class = cost_class
         self.cost_bbox = cost_bbox
         self.cost_giou = cost_giou
-        # self.cost_caption = cost_caption
         self.cost_alpha = cost_alpha
         self.cost_gamma = cost_gamma
 
@@ -237,20 +236,15 @@ class HungarianMatcher_cl(nn.Module):
             cost_giou = -generalized_box_iou(box_cl_to_xy(out_bbox),
                                              box_cl_to_xy(tgt_bbox))
 
-            # cost_caption = outputs['caption_costs'].flatten(0, 1)
             if isinstance(outputs['cl_match_mats'], torch.Tensor):
                 cost_cl = -1.0 * outputs['cl_match_mats'][:, :cost_bbox.shape[1]]
             else:
                 cost_cl = -1 * outputs['cl_match_mats']
 
             # Final cost matrix
-            # C = self.cost_bbox * cost_bbox + self.cost_class * cost_class + self.cost_giou * cost_giou + self.cost_cl * cost_cl.repeat(10,1)
-            
-            # C.shape = [queryNum,eventNum]
             C = self.cost_bbox * cost_bbox + self.cost_class * cost_class + self.cost_giou * cost_giou + self.cost_cl * cost_cl +self.cost_caption * cost_caption
             if self.opt is not None and self.opt.set_cost_caption > 0 and 'cap_cost_mat' in outputs:
                 C = C + self.opt.set_cost_caption * outputs['cap_cost_mat']
-            # pdb.set_trace()
             costs = {'cost_bbox': cost_bbox,
                      'cost_class': cost_class,
                      'cost_giou': cost_giou,
@@ -262,12 +256,10 @@ class HungarianMatcher_cl(nn.Module):
                 print(self.cost_bbox, cost_bbox.var(dim=0), cost_bbox.max(dim=0)[0] - cost_bbox.min(dim=0)[0])
                 print(self.cost_class, cost_class.var(dim=0), cost_class.max(dim=0)[0] - cost_class.min(dim=0)[0])
                 print(self.cost_giou, cost_giou.var(dim=0), cost_giou.max(dim=0)[0] - cost_giou.min(dim=0)[0])
-                # print(self.cost_caption, cost_caption.var(dim=0), cost_caption.max(dim=0)[0] - cost_caption.min(dim=0)[0])
 
             C = C.view(bs, num_queries, -1).cpu()
 
             sizes = [len(v["boxes"]) for v in targets]
-            # pdb.set_trace()
             indices = [linear_sum_assignment(c[i]) for i, c in enumerate(C.split(sizes, -1))]
             m2o_rate = 4
             rl_indices = [linear_sum_assignment(torch.cat([c[i]]*m2o_rate, -1)) for i, c in enumerate(C.split(sizes, -1))]

@@ -244,75 +244,6 @@ class CM2(nn.Module):
         outputs_class0 = counter(hs_lid_pool)
         return outputs_class0
 
-    # def parallel_prediction_full_train(self, dt, criterion, contrastive_criterion, hs, init_reference, inter_references, others,
-    #                              disable_iterative_refine):
-    #     outputs_classes = []
-    #     outputs_classes0 = []
-    #     outputs_coords = []
-    #     outputs_cap_losses = []
-    #     outputs_cap_probs = []
-    #     outputs_cap_seqs = []
-    #     cl_match_mats = []
-        
-
-    #     num_pred = hs.shape[0]
-    #     for l_id in range(hs.shape[0]):
-    #         if l_id == 0:
-    #             reference = init_reference
-    #         else:
-    #             reference = inter_references[l_id - 1]  # [decoder_layer, batch, query_num, ...]
-    #         hs_lid = hs[l_id]
-    #         outputs_class = self.class_head[l_id](hs_lid)  # [bs, num_query, N_class]
-    #         output_count = self.predict_event_num(self.count_head[l_id], hs_lid)
-    #         tmp = self.bbox_head[l_id](hs_lid)  # [bs, num_query, 4]
-
-    #         # if self.opt.disable_mid_caption_heads and (l_id != hs.shape[0] - 1):
-            
-    #         cl_match_mats.append(0)
- 
-    #         if l_id != hs.shape[0] - 1:
-    #             cap_probs, seq = self.caption_prediction_eval(
-    #                 self.caption_head[l_id], dt, hs_lid, reference, others, 'none')
-    #         else:
-    #             cap_probs, seq = self.caption_prediction_eval(
-    #                 self.caption_head[l_id], dt, hs_lid, reference, others, self.opt.caption_decoder_type)
-
-    #         if disable_iterative_refine:
-    #             outputs_coord = reference
-    #         else:
-    #             reference = inverse_sigmoid(reference)
-    #             if reference.shape[-1] == 2:
-    #                 tmp += reference
-    #             else:
-    #                 assert reference.shape[-1] == 1
-    #                 tmp[..., :2] += reference
-    #             outputs_coord = tmp.sigmoid()  # [bs, num_query, 4]
-
-    #         outputs_classes.append(outputs_class)
-    #         outputs_classes0.append(output_count)
-    #         outputs_coords.append(outputs_coord)
-    #         outputs_cap_probs.append(cap_probs)
-    #         outputs_cap_seqs.append(seq)
-    #     outputs_class = torch.stack(outputs_classes)  # [decoder_layer, bs, num_query, N_class]
-    #     output_count = torch.stack(outputs_classes0)
-    #     outputs_coord = torch.stack(outputs_coords)  # [decoder_layer, bs, num_query, 4]
-
-    #     all_out = {'pred_logits': outputs_class,
-    #                'pred_count': output_count,
-    #                'pred_boxes': outputs_coord,
-    #                'caption_probs': outputs_cap_probs,
-    #                'seq': outputs_cap_seqs,
-    #                'cl_match_mats': cl_match_mats}
-
-    #     out = {k: v[-1] for k, v in all_out.items()}
-
-    #     if self.aux_loss:
-    #         ks, vs = list(zip(*(all_out.items())))
-    #         out['aux_outputs'] = [{ks[i]: vs[i][j] for i in range(len(ks))} for j in range(num_pred - 1)]
-
-    #     loss, last_indices, aux_indices = criterion(out, dt['video_target'])
-       
-    #     return out, loss
     def parallel_prediction_full(self, dt, criterion, contrastive_criterion, hs, query_embed, init_reference,
                                  inter_references, others,
                                  disable_iterative_refine, disable_captioning=False):
@@ -411,9 +342,7 @@ class CM2(nn.Module):
             cost_caption, loss_caption, cap_probs, seq = self.caption_prediction(self.caption_head[l_id], dt, cap_f,
                                                                                  reference, others, 'none')
 
-            # tmp = self.bbox_head[l_id](hs_lid)  # [bs, num_query, 4]
-            # cost_caption, loss_caption, cap_probs, seq = self.caption_prediction(self.caption_head[l_id], dt, hs_lid,
-            #                                                                      reference, others, 'none')
+
             if disable_iterative_refine:
                 outputs_coord = reference
             else:
@@ -430,14 +359,13 @@ class CM2(nn.Module):
             outputs_classes.append(outputs_class)
             outputs_counts.append(outputs_count)
             outputs_coords.append(outputs_coord)
-            # outputs_cap_losses.append(cap_loss)
             outputs_cap_probs.append(cap_probs)
             outputs_cap_seqs.append(seq)
 
         outputs_class = torch.stack(outputs_classes)  # [decoder_layer, bs, num_query, N_class]
         outputs_count = torch.stack(outputs_counts)
         outputs_coord = torch.stack(outputs_coords)  # [decoder_layer, bs, num_query, 4]
-        # outputs_cap_loss = torch.stack(outputs_cap_losses)
+
 
         all_out = {
             'pred_logits': outputs_class,
@@ -542,10 +470,7 @@ class CM2(nn.Module):
             return cost_caption, loss_caption, cap_probs, seq
 
 
-        # elif self.opt.caption_decoder_type == 'standard':
         elif self.opt.caption_decoder_type == 'gpt2':
-            # assert N_ == 1, 'only support batchsize = 1'
-            # print(cap_bigids,cap_bigids)
             caption_tensor = dt['cap_tensor'][cap_bigids]
             caption_mask = dt['cap_mask'][cap_bigids]
 
@@ -563,12 +488,7 @@ class CM2(nn.Module):
                     cap_head_output=cap_head(hs[:, feat_bigids].permute(1,0,2), caption_tensor, caption_mask, others, seq,dt["video_tensor"])
                     cap_prob_eval = cap_head_output.logits
                     cap_loss=cap_head_output.loss
-                    # if len(seq):
-                    #     seq = seq.reshape(-1, N_q, seq.shape[-1])
-                    #     cap_prob_eval = cap_prob_eval.reshape(-1, N_q, cap_prob_eval.shape[-1])
                     cap_probs['cap_prob_eval'] = cap_prob_eval
-
-
 
 
         if self.opt.caption_cost_type == 'loss':
@@ -641,8 +561,6 @@ class CM2(nn.Module):
                 g_out= cap_head.generate(hs.permute(1,0,2), reference, others,dt["video_tensor"])
                 seq=g_out["sequences"]
                 g_score=g_out["sequences_scores"]
-                # no use
-                # cap_probs['cap_prob_eval'] = torch.zeros((hs.shape[1],self.opt.max_caption_len, 50257), dtype=torch.float32)
                 cap_prob_eval=torch.zeros(seq.shape[0],seq.shape[1],50257, device=hs.device)
                 if len(seq):
                     seq = seq.reshape(-1, N_q, seq.shape[-1])
@@ -715,14 +633,10 @@ class PostProcess(nn.Module):
             if len(seq):
                 mask = (seq > 0).float()
                 cap_scores = outputs['caption_probs']['cap_prob_eval_score'].cpu().numpy().astype('float')
-                # cap_scores = (mask * cap_prob).sum(2).cpu().numpy().astype('float')
                 seq = seq.detach().cpu().numpy().astype('int')  # (eseq_batch_size, eseq_len, cap_len)
-                # caps = [[loader.dataset.translator.rtranslate(s) for s in s_vid] for s_vid in seq]
                 caps = [[loader.dataset.tokenizer.decode(s,skip_special_tokens =True).split(":")[-1].split('.')[0].lower().strip()+"." for s in s_vid] for s_vid in seq]
                 caps = [[caps[batch][idx] for q_id, idx in enumerate(b)] for batch, b in enumerate(topk_boxes)]
                 cap_scores = [[cap_scores[batch, idx] for q_id, idx in enumerate(b)] for batch, b in enumerate(topk_boxes)]
-                cap_scores
-                # cap_scores = [[0 for q_id, idx in enumerate(b)] for batch, b in enumerate(topk_boxes)]
             else:
                 bs, num_queries = boxes.shape[:2]
                 cap_scores = [[-1e5] * num_queries] * bs

@@ -23,9 +23,7 @@ def collate_fn(batch):
     max_video_length = max([x.shape[0] for x in feature_list])
     max_caption_length = max(chain(*[[len(caption) for caption in captions] for captions in caption_list]))
     total_caption_num = sum(chain([len(captions) for captions in caption_list]))
-    # total_proposal_num = sum(chain([len(timestamp) for timestamp in timestamps_list]))
 
-    # timestamps = list(chain(*timestamps_list))
     gt_timestamps = list(chain(*gt_timestamps_list))
 
     video_tensor = torch.FloatTensor(batch_size, max_video_length, feature_size).zero_()
@@ -35,23 +33,11 @@ def collate_fn(batch):
     caption_tensor = torch.LongTensor(total_caption_num, max_caption_length).zero_()
 
     caption_length = torch.LongTensor(total_caption_num).zero_()
-    # caption_mask = torch.BoolTensor(total_caption_num, max_caption_length).zero_()
     caption_gather_idx = torch.LongTensor(total_caption_num).zero_()
-    # proposal_gather_idx = torch.LongTensor(total_proposal_num).zero_()
 
-    # max_proposal_num = max(len(x) for x in timestamps_list)
     max_caption_num = max(len(x) for x in caption_list)
 
-    # lnt_boxes_tensor = torch.zeros(batch_size, max_proposal_num, 4)
     gt_boxes_tensor = torch.zeros(batch_size, max_caption_num, 2)
-
-    # index information for finding corresponding gt captions
-    # gt_idx_tensor = torch.LongTensor(total_proposal_num, 3).zero_()
-
-    # num_queries = len(query_gather_idx[0])
-    # total_query_match_num = sum([len(list(chain(*q_cap))) for q_cap in query_gather_idx])
-    # query_gather_idx_tensor = torch.LongTensor(total_query_match_num, 2)
-    # query_idx_for_loss = torch.LongTensor(batch_size, 2)
 
     total_caption_idx = 0
     total_proposal_idx = 0
@@ -67,35 +53,18 @@ def collate_fn(batch):
         video_length[idx, 2] = gt_proposal_length
         video_mask[idx, :video_len] = True
 
-        # proposal_gather_idx[total_proposal_idx:total_proposal_idx + proposal_length] = idx
-        # gt_idx_tensor[total_proposal_idx: total_proposal_idx + proposal_length, 0] = torch.from_numpy(
-        #     total_caption_idx + gt_idx[idx])
-        # gt_idx_tensor[total_proposal_idx: total_proposal_idx + proposal_length, 1] = idx
-        # gt_idx_tensor[total_proposal_idx: total_proposal_idx + proposal_length, 2] = torch.from_numpy(gt_idx[idx])
 
         caption_gather_idx[total_caption_idx:total_caption_idx + gt_proposal_length] = idx
 
-        # vid_query_idx = torch.as_tensor(query_gather_idx[idx])
-        # vid_query_idx2 = torch.as_tensor(query_gather_idx2[idx])
-        # query_gather_idx_tensor[total_caption_idx * num_queries: (total_caption_idx + gt_proposal_length) * num_queries,
-        # 0] = total_caption_idx + vid_query_idx.reshape(-1)
-        # query_gather_idx_tensor[total_caption_idx * num_queries: (total_caption_idx + gt_proposal_length) * num_queries,
-        # 1] = num_queries * idx + vid_query_idx2.reshape(-1)
-
-        # query_idx_for_loss[idx, 0] = total_caption_idx * num_queries
-        # query_idx_for_loss[idx, 1] = vid_query_idx.shape[1]  # len(caption) for the idx-th video
-
-        # lnt_boxes_tensor[idx, :proposal_length] = torch.tensor([[(ts[1]+ts[0])/(2*raw_duration[idx]), 0.5, (ts[1]-ts[0])/raw_duration[idx], 0.5] for ts in raw_timestamp[idx]]).float()
+    
         gt_boxes_tensor[idx, :gt_proposal_length] = torch.tensor(
             [[(ts[1] + ts[0]) / (2 * raw_duration[idx]), (ts[1] - ts[0]) / raw_duration[idx]] for ts in
              gt_raw_timestamp[idx]]).float()
 
         for iidx, captioning in enumerate(caption_list[idx]):
-            # _caption_len = len(captioning)
             _caption_len=sum(captioning!=50256).item()
             caption_length[total_caption_idx + iidx] = _caption_len
             caption_tensor[total_caption_idx + iidx] = captioning
-            # caption_mask[total_caption_idx + iidx, :_caption_len] = True
         total_caption_idx += gt_proposal_length
 
     gt_boxes_mask = (gt_boxes_tensor != 0).sum(2) > 0
@@ -117,20 +86,7 @@ def collate_fn(batch):
                 "key": list(key),  # list,        (video_num)
                 "target": target,
             },
-        # "lnt":
-        #     {
-        #         "featstamps": timestamps,  # list,        (lnt_all_event_num, 2)
-        #         'boxes': lnt_boxes_tensor,
-        #         "boxes_mask": lnt_boxes_mask,
-        #         "timestamp": list(raw_timestamp),  # list (len: video_num) of tensors (shape: (~lnt_event_num, 2))
-        #         "gather_idx": proposal_gather_idx,  # tensor, (lnt_all_event_num)
-        #         "gt_idx": gt_idx_tensor,  # tensor,      (lnt_all_event_num, 3)
-        #     },
-        # "query":
-        #     {
-        #         "gather_idx": query_gather_idx_tensor,
-        #         # "gather_idx_for_loss": query_idx_for_loss,
-        #     },
+        
         "gt":
             {
                 "featstamps": gt_timestamps,  # list,        (gt_all_event_num, 2)
@@ -211,13 +167,11 @@ class EDVCdataset(Dataset):
         self.feature_dim = self.opt.feature_dim
         self.num_queries = opt.num_queries
         
-        # 如果是clip的特征 就加载
         if 'clip' in opt.visual_feature_type:
             self.viz_feats=torch.load(feature_folder[0])
             
     def __len__(self):
         return len(self.keys)
-        # return 3
 
     def process_time_step(self, duration, timestamps_list, feature_length):
         duration = np.array(duration)
@@ -279,7 +233,6 @@ class PropSeqDataset(EDVCdataset):
     def __getitem__(self, idx):
         key = str(self.keys[idx])
 
-        # 如果是clip的特征就不做处理
         if 'clip' in self.opt.visual_feature_type:
             try:
                 feats = self.viz_feats[key].numpy()
@@ -303,9 +256,6 @@ class PropSeqDataset(EDVCdataset):
         action_labels = [action_labels[_] for _ in range(len(action_labels)) if _ in random_ids]
 
 
-
-        # caption_label = [np.array(self.translator.translate(sent, self.max_caption_len)) for sent in captions]
-        # tokenizer.encode(sent,)
         bos_caption=["<|endoftext|> "+ cap.split(".")[0].lower() +"." for cap in captions]
         caption_input = self.tokenizer(
             bos_caption,
@@ -320,12 +270,6 @@ class PropSeqDataset(EDVCdataset):
 
 
         gt_featstamps = self.process_time_step(duration, gt_timestamps, feats.shape[0])
-
-        # lnt_timestamps = gt_timestamps
-        # lnt_featstamps = gt_featstamps
-        # gt_idx = np.arange(len(gt_timestamps))
-        # event_seq_idx = seq_gt_idx = np.expand_dims(gt_idx, 0)
-        # lnt_scores = [1.] * len(lnt_featstamps)
 
         return feats, gt_featstamps, action_labels, caption_label,caption_mask, gt_timestamps, duration, captions, key
 
@@ -417,9 +361,7 @@ def get_feats(key, vf_type, vf_folder, data_norm=False):
 
 
 def resizeFeature(inputData, newSize, sample_method):
-    # inputX: (temporal_length,feature_dimension) #
     originalSize = len(inputData)
-    # print originalSize
     if originalSize == 1:
         inputData = np.reshape(inputData, [-1])
         return np.stack([inputData] * newSize)

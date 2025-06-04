@@ -530,7 +530,6 @@ class ContrastiveCriterion(nn.Module):
                     loss += t2e_loss
                 base += current_gt_event_num
             loss = loss / batch_size
-        # pdb.set_trace()
         if return_logits:
             return loss, raw_logits
         return loss

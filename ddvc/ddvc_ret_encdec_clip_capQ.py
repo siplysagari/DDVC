@@ -1350,7 +1350,6 @@ class PostProcess(nn.Module):
                         event_j = C[i][:, j].argmin()
                     else:
                         if j not in cap_ind:
-                            # print(C[0].shape, len(C), j)
                             event_j = C[i][:, j].argmin()
                         else:
                             match_id = cap_ind.index(j)
@@ -1414,20 +1413,15 @@ class PostProcess(nn.Module):
             mask = outputs['caption_probs']['gen_mask']
             cap_prob = outputs['caption_probs']['cap_prob_eval']
             cap_scores = (mask * cap_prob).sum(2).cpu().numpy().astype('float')
-            # cap_scores = outputs['caption_probs']['cap_prob_eval_score']
             caps = [[caps[batch][idx] for q_id, idx in enumerate(b)] for batch, b in enumerate(topk_boxes)]
         else:
             if len(seq):
                 mask = (seq > 0).float()
                 cap_scores = outputs['caption_probs']['cap_prob_eval_score'].cpu().numpy().astype('float')
-                # cap_scores = (mask * cap_prob).sum(2).cpu().numpy().astype('float')
                 seq = seq.detach().cpu().numpy().astype('int')  # (eseq_batch_size, eseq_len, cap_len)
-                # caps = [[loader.dataset.translator.rtranslate(s) for s in s_vid] for s_vid in seq]
                 caps = [[loader.dataset.tokenizer.decode(s,skip_special_tokens =True).split(":")[-1].split('.')[0].lower().strip()+"." for s in s_vid] for s_vid in seq]
                 caps = [[caps[batch][idx] for q_id, idx in enumerate(b)] for batch, b in enumerate(topk_boxes)]
                 cap_scores = [[cap_scores[batch, idx] for q_id, idx in enumerate(b)] for batch, b in enumerate(topk_boxes)]
-                cap_scores
-                # cap_scores = [[0 for q_id, idx in enumerate(b)] for batch, b in enumerate(topk_boxes)]
             else:
                 bs, num_queries = boxes.shape[:2]
                 cap_scores = [[-1e5] * num_queries] * bs
@@ -1500,10 +1494,6 @@ class MLP(nn.Module):
 def build(args):
     device = torch.device(args.device)
     base_encoder = build_base_encoder(args)
-    # clip_model_path = "/disk1_2t/model/clip/ViT-L-14.pt" 
-    
-    # with torch.no_grad():
-    #     clip_model, feature_extractor = clip.load(clip_model_path, device=device)
     clip_model, feature_extractor=None,None
 
 

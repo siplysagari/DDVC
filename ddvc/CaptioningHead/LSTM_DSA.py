@@ -12,7 +12,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import *
 
-from cm2.ops.modules import MSDeformAttnCap
+from ddvc.ops.modules import MSDeformAttnCap
 
 class Captioner(nn.Module):
     def __init__(self, opt):
@@ -46,8 +46,6 @@ class Captioner(nn.Module):
                 weight.new(self.num_layers, batch_size, self.rnn_size).zero_())  # (h0, c0)
 
     def build_loss(self, input, target, mask):
-        # print(input.shape)
-        # print(target)
         one_hot = torch.nn.functional.one_hot(target, self.opt.vocab_size+1)
         max_len = input.shape[1]
         output = - (one_hot[:, :max_len] * input * mask[:, :max_len, None]).sum(2).sum(1) / (mask.sum(1) + 1e-6)
@@ -101,7 +99,6 @@ class Captioner(nn.Module):
                     it = Variable(it, requires_grad=False)
             else:
                 it = seq[:, i].clone()
-                # break if all the sequences end
             if i >= 1 and seq[:, i].data.sum() == 0:
                 break
 
@@ -197,7 +194,6 @@ class ShowAttendTellCore(nn.Module):
         self.rnn_size = opt.rnn_size
         self.num_layers = opt.num_layers
         self.drop_prob_lm = opt.drop_prob
-        #self.fc_feat_size = opt.fc_feat_size
         self.att_feat_size = int(opt.clip_context_dim / opt.cap_nheads)
         self.att_hid_size = opt.att_hid_size
 
@@ -259,7 +255,6 @@ class ShowAttendTellCore(nn.Module):
         att_res = torch.bmm(weight.unsqueeze(1), att_feats_).squeeze(1) # batch * att_feat_size
         att_res = att_res.reshape(N_ * Lq_, self.n_heads, self.att_feat_size).flatten(1)
         input_feats = torch.cat((att_res.unsqueeze(0), query), 2)
-        # print(xt.shape, input_feats.shape, query.shape, reference_points.shape)
         output, state = self.rnn(torch.cat([xt.unsqueeze(0), input_feats], 2), state)
 
         return output.squeeze(0), state

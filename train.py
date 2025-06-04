@@ -6,7 +6,7 @@ from __future__ import print_function
 
 
 import sys
-sys.path.insert(0, "/disk1_2t/jinyuan/CM2_DVC_GPT2@2")
+sys.path.insert(0, "/disk1_2t/DDVC_GPT2@2")
 import os
 import json
 import time
@@ -23,7 +23,6 @@ ddvc_dir = dirname(abspath(__file__))
 sys.path.insert(0, ddvc_dir)
 sys.path.insert(0, os.path.join(ddvc_dir, 'densevid_eval3'))
 sys.path.insert(0, os.path.join(ddvc_dir, 'densevid_eval3/SODA'))
-# print(sys.path)
 
 from eval_utils_clip import evaluate
 import opts
@@ -118,7 +117,6 @@ def train(opt):
     if opt.pretrain and (not opt.start_from):
         logger.info('Load pre-trained parameters from {}'.format(opt.pretrain_path))
         model_pth = torch.load(opt.pretrain_path, map_location=torch.device(opt.device))
-        # query_weight = model_pth['model'].pop('query_embed.weight')
         if opt.pretrain == 'encoder':
             encoder_filter = model.get_filter_rule_for_encoder()
             encoder_pth = {k:v for k,v in model_pth['model'].items() if encoder_filter(k)}
@@ -129,7 +127,6 @@ def train(opt):
             model.load_state_dict(decoder_pth, strict=True)
             pass
         elif opt.pretrain == 'full':
-            # model_pth = transfer(model, model_pth)
             model.load_state_dict(model_pth['model'], strict=True)
         else:
             raise ValueError("wrong value of opt.pretrain")
@@ -180,7 +177,6 @@ def train(opt):
     if opt.able_ret:
         memory_bank=load_clip_memory_bank(opt)
         clip_gt=load_clip_gt(opt)
-        # memory_bank['vid_feature']=torch.tensor(memory_bank['vid_feature']).to('cuda')
         memory_bank['vid_sent_embeds']=torch.tensor(memory_bank['vid_sent_embeds']).to('cuda')
         memory_bank["clip_gt"]=clip_gt
     else:
@@ -300,7 +296,6 @@ def train(opt):
                 infer_mode=False
             infer_mode=True
             eval_score, eval_loss = evaluate(model,memory_bank, criterion,contrastive_criterion, postprocessors, val_loader, result_json_path, logger=logger, alpha=opt.ec_alpha, device=opt.device, debug=opt.debug,infer_mode=infer_mode)
-            # eval_score, eval_loss = evaluate(model,memory_bank, criterion,contrastive_criterion, postprocessors, val_loader, result_json_path, alpha=opt.ec_alpha,logger=logger, device=opt.device, debug=opt.debug,infer_mode=infer_mode)
             if opt.caption_decoder_type == 'none':
                 current_score = 2./(1./eval_score['Precision'] + 1./eval_score['Recall'])
             else:

@@ -43,12 +43,6 @@ class DeformableTransformer(nn.Module):
         self.text_encoder= DeformableTransformerEncoder(encoder_layer, num_encoder_layers)
         
         self.level_embed = nn.Parameter(torch.Tensor(num_feature_levels, d_model))
-        # if args.text_crossAttn is False and args.combined_encoder is False:
-        #     num_feature_levels=5
-        #     dec_n_points=5
-            
-        # if args.combined_encoder is True:
-        #     num_feature_levels=4
         decoder_layer = DeformableTransformerDecoderLayer(d_model, dim_feedforward,
                                                           dropout, activation,
                                                           num_feature_levels, nhead, dec_n_points,args)

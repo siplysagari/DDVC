@@ -63,7 +63,6 @@ def main(p_input, p_output=None):
 
 
 if __name__ == '__main__':
-    # p_input = '/apdcephfs/share_1367250/wybertwang/project/VideoDETR/save/0205_bs1_cl005_t01_bert/prediction/num4917_epoch0.json'
     p_input = sys.argv[1]
     p_output = p_input.rstrip('.json') + '.png'
     main(p_input, p_output)

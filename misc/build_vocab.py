@@ -1,11 +1,9 @@
 # coding:utf-8
 import json
 
-# file_path_list = ["data/captiondata/train_modified.json", "data/captiondata/val_1.json", "data/captiondata/val_2.json"]
 file_path_list = ["data/captiondata/yc2/yc2_train.json", "data/captiondata/yc2/yc2_val.json"]
 
 count_threshold = 2 # 4 for anet, 2 for youcook2
-# output_path = './data/vocabulary_activitynet.json'
 output_path = './data/vocabulary_youcook2.json'
 
 mark = [',', ':', '!', '_', ';', '-', '.', '?', '/', '"', '\\n', '\\']
@@ -32,9 +30,7 @@ for file_path in file_path_list:
             sentence = sentence.split(" ")
             length = len(sentence)
 
-            # print(sentence)
             for word in sentence:
-                # print(type(word))
                 for m in word:
                     if m == ' ':
                         print('warning !')

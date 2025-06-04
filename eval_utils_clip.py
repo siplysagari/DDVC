@@ -294,8 +294,6 @@ def evaluate(model,memory_bank,criterion,contrastive_criterion, postprocessors, 
         save_dvc_json(out_json_tal, tal_result_json_path)
         scores.update(score_tal) 
     save_dvc_json(out_json, dvc_json_path)
-    # save_dvc_json(out_json_g, dvc_json_path + '.grounding.json')
-    # save_dvc_json(aux_out_json_g, dvc_json_path + '_aux.grounding.json')
     return scores, loss_sum
 
 def collect_tal_result(out, name_map):
